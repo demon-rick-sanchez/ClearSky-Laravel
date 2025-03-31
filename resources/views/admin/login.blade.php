@@ -1,12 +1,12 @@
 <x-admin-layout>
-    <div class="flex min-h-screen flex-col justify-center px-6 py-12 bg-gray-50">
+    <div class="flex min-h-screen flex-col justify-center px-6 py-12 bg-white">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <h2 class="text-center text-2xl font-bold leading-9 text-[#212121]">Admin Login</h2>
             <p class="mt-2 text-center text-sm text-gray-600">Welcome back to the admin panel</p>
         </div>
 
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
-            <div class="bg-white px-8 py-12 shadow-lg rounded-lg">
+            <div class="bg-white px-8 py-12 rounded-lg">
                 <form class="space-y-6" action="{{ route('admin.login') }}" method="POST">
                     @csrf
                     
