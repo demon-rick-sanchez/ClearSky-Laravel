@@ -121,11 +121,38 @@ class AdminDashboardController extends Controller
 
     public function users()
     {
-        return view('admin.users');
+        $admins = Admin::all();
+        return view('admin.users', compact('admins'));
     }
 
     public function settings()
     {
         return view('admin.settings');
+    }
+
+    public function destroy(Admin $admin)
+    {
+        try {
+            // Check if user is superadmin and not deleting themselves
+            if (auth('admin')->user()->role !== 'superadmin' || auth('admin')->id() === $admin->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to delete this admin'
+                ], 403);
+            }
+
+            $admin->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Admin deletion failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete admin'
+            ], 500);
+        }
     }
 }

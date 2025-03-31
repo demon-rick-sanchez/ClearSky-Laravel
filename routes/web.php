@@ -24,6 +24,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
         Route::get('/settings', [AdminDashboardController::class, 'settings'])->name('admin.settings');
         Route::post('/logout', [AdminDashboardController::class, 'logout'])->name('admin.logout');
+        Route::delete('/admins/{admin}', [AdminDashboardController::class, 'destroy'])->name('admin.destroy');
     });
 
     Route::get('/check-admins', [AdminDashboardController::class, 'listAdmins'])
