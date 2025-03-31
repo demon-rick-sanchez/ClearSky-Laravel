@@ -6,8 +6,26 @@
         </div>
 
         <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
+            <!-- Error Messages -->
+            @if ($errors->any())
+                <div class="mb-4 bg-red-50 text-red-500 p-4 rounded-lg">
+                    <ul class="list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <!-- Success Message -->
+            @if (session('success'))
+                <div class="mb-4 bg-green-50 text-green-500 p-4 rounded-lg">
+                    {{ session('success') }}
+                </div>
+            @endif
+
             <div class="bg-white px-8 py-12 rounded-lg">
-                <form class="space-y-6" action="{{ route('admin.register') }}" method="POST">
+                <form class="space-y-6" action="{{ route('admin.store') }}" method="POST">
                     @csrf
                     
                     <div>
