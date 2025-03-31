@@ -18,6 +18,11 @@ Route::prefix('admin')->group(function () {
     // Protected routes - using full class name to avoid resolution issues
     Route::middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
+        Route::get('/sensors', [AdminDashboardController::class, 'sensors'])->name('admin.sensors');
+        Route::get('/simulation', [AdminDashboardController::class, 'simulation'])->name('admin.simulation');
+        Route::get('/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
+        Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
+        Route::get('/settings', [AdminDashboardController::class, 'settings'])->name('admin.settings');
         Route::post('/logout', [AdminDashboardController::class, 'logout'])->name('admin.logout');
     });
 

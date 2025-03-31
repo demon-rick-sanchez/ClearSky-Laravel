@@ -103,4 +103,29 @@ class AdminDashboardController extends Controller
             'total' => $admins->count()
         ]);
     }
+
+    public function sensors()
+    {
+        return view('admin.sensors');
+    }
+
+    public function simulation()
+    {
+        return view('admin.simulation');
+    }
+
+    public function alerts()
+    {
+        return view('admin.alerts');
+    }
+
+    public function users()
+    {
+        return view('admin.users');
+    }
+
+    public function settings()
+    {
+        return view('admin.settings');
+    }
 }
