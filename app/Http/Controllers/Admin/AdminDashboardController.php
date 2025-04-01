@@ -19,7 +19,21 @@ class AdminDashboardController extends Controller
 
     public function index()
     {
-        return view('admin.dashboard');
+        $data = [
+            'totalSensors' => Sensor::count(),
+            'activeSensors' => Sensor::where('status', 'active')->count(),
+            'activeAlerts' => 0, // Implement alert counting
+            'adminCount' => Admin::count(),
+            'recentActivity' => collect([]), // Implement activity tracking
+            'latestAlerts' => collect([]), // Implement alerts
+            'systemStatus' => [
+                'cpu_load' => random_int(20, 80), // Replace with actual monitoring
+                'memory_usage' => random_int(30, 90),
+                'storage_usage' => random_int(40, 70),
+            ]
+        ];
+
+        return view('admin.dashboard', $data);
     }
 
     public function login()
