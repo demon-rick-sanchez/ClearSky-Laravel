@@ -150,6 +150,77 @@ class AdminDashboardController extends Controller
         }
     }
 
+    public function editSensor(Sensor $sensor)
+    {
+        return response()->json($sensor);
+    }
+
+    public function updateSensor(Request $request, Sensor $sensor)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'location' => 'required|string|max:255',
+                'type' => 'required|in:co2,no2,pm25',
+                'threshold_value' => 'required|numeric|min:0',
+                'start_date' => 'required|date',
+                'notes' => 'nullable|string',
+            ]);
+
+            $sensor->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sensor updated successfully',
+                'sensor' => $sensor
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update sensor: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateSensorStatus(Request $request, Sensor $sensor)
+    {
+        try {
+            $validated = $request->validate([
+                'status' => 'required|in:active,inactive',
+            ]);
+
+            $sensor->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sensor status updated successfully',
+                'sensor' => $sensor
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update sensor status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteSensor(Sensor $sensor)
+    {
+        try {
+            $sensor->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sensor deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete sensor: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function simulation()
     {
         return view('admin.simulation');

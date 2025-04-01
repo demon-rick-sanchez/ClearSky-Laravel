@@ -27,6 +27,13 @@ Route::prefix('admin')->group(function () {
         Route::get('/settings', [AdminDashboardController::class, 'settings'])->name('admin.settings');
         Route::post('/logout', [AdminDashboardController::class, 'logout'])->name('admin.logout');
         Route::delete('/admins/{admin}', [AdminDashboardController::class, 'destroy'])->name('admin.destroy');
+
+        Route::prefix('sensors')->group(function () {
+            Route::get('/{sensor}/edit', [AdminDashboardController::class, 'editSensor'])->name('admin.sensors.edit');
+            Route::put('/{sensor}', [AdminDashboardController::class, 'updateSensor'])->name('admin.sensors.update');
+            Route::put('/{sensor}/status', [AdminDashboardController::class, 'updateSensorStatus'])->name('admin.sensors.status');
+            Route::delete('/{sensor}', [AdminDashboardController::class, 'deleteSensor'])->name('admin.sensors.delete');
+        });
     });
 
     Route::get('/check-admins', [AdminDashboardController::class, 'listAdmins'])
