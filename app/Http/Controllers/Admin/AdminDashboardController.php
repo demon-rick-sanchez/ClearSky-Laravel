@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Models\Sensor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -106,7 +107,47 @@ class AdminDashboardController extends Controller
 
     public function sensors()
     {
-        return view('admin.sensors');
+        $sensors = Sensor::orderBy('created_at', 'desc')->get();
+        return view('admin.sensors', compact('sensors'));
+    }
+
+    public function generateSensorId()
+    {
+        do {
+            $sensorId = 'SNR-' . strtoupper(substr(md5(uniqid()), 0, 6));
+        } while (Sensor::where('sensor_id', $sensorId)->exists());
+
+        return response()->json(['sensor_id' => $sensorId]);
+    }
+
+    public function storeSensor(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'sensor_id' => 'required|string|unique:sensors',
+                'location' => 'required|string|max:255',
+                'type' => 'required|in:co2,no2,pm25',
+                'threshold_value' => 'required|numeric|min:0',
+                'start_date' => 'required|date',
+                'notes' => 'nullable|string',
+            ]);
+
+            $validated['status'] = 'active';
+            $sensor = Sensor::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sensor added successfully',
+                'sensor' => $sensor
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Sensor creation failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add sensor: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function simulation()

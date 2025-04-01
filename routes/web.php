@@ -19,6 +19,8 @@ Route::prefix('admin')->group(function () {
     Route::middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
         Route::get('/sensors', [AdminDashboardController::class, 'sensors'])->name('admin.sensors');
+        Route::post('/sensors/generate-id', [AdminDashboardController::class, 'generateSensorId'])->name('admin.generate-sensor-id');
+        Route::post('/sensors/store', [AdminDashboardController::class, 'storeSensor'])->name('admin.sensors.store');
         Route::get('/simulation', [AdminDashboardController::class, 'simulation'])->name('admin.simulation');
         Route::get('/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
         Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
