@@ -1,32 +1,77 @@
 <x-admin-layout>
-    <!-- Header Section with Add Button -->
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-[#212121]">Sensor Management</h2>
-        <button onclick="showAddSensorModal()" class="px-4 py-2 bg-[#212121] text-white rounded-lg flex items-center hover:bg-opacity-90">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-            </svg>
-            Add New Sensor
-        </button>
+    <!-- Header Section with Add Button and Stats -->
+    <div class="mb-6 space-y-4">
+        <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-[#212121]">Sensor Management</h2>
+            <button onclick="showAddSensorModal()" class="px-4 py-2 bg-[#212121] text-white rounded-lg flex items-center hover:bg-opacity-90 transition-all duration-200 transform hover:scale-105">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Add New Sensor
+            </button>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">Active Sensors</p>
+                        <p class="text-xl font-semibold text-[#212121]">{{ $sensors->where('status', 'active')->count() }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                <div class="flex items-center">
+                    <div class="p-2 bg-red-100 rounded-lg">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">Inactive Sensors</p>
+                        <p class="text-xl font-semibold text-[#212121]">{{ $sensors->where('status', 'inactive')->count() }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-lg border border-gray-100 shadow-sm">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">Total Sensors</p>
+                        <p class="text-xl font-semibold text-[#212121]">{{ $sensors->count() }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Sensors List -->
-    <div class="bg-white rounded-lg border border-gray-100">
+    <!-- Sensors List - Updated styling -->
+    <div class="bg-white rounded-lg border border-gray-200">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full">
+                <thead>
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sensor Info</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Readings</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Health Status</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity Period</th>
-                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th scope="col" class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">Sensor Info</th>
+                        <th scope="col" class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">Readings</th>
+                        <th scope="col" class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">Health Status</th>
+                        <th scope="col" class="px-8 py-4 text-left text-xs font-medium text-gray-500 uppercase">Activity Period</th>
+                        <th scope="col" class="px-8 py-4 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody>
                     @forelse($sensors as $sensor)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">
+                        <tr class="border-t border-gray-100">
+                            <td class="px-8 py-5">
                                 <div class="flex items-center">
                                     <div class="h-10 w-10 flex-shrink-0">
                                         <div class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -44,7 +89,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-8 py-5">
                                 <div class="text-sm text-[#212121] font-medium">--</div>
                                 <div class="text-xs text-gray-500">Threshold: {{ $sensor->threshold_value }} ppm</div>
                                 <div class="mt-1 flex items-center">
@@ -54,20 +99,20 @@
                                     <span class="ml-2 text-xs text-gray-500">No data</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-8 py-5">
                                 <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-3 w-3 rounded-full {{ $sensor->status === 'active' ? 'bg-green-400' : 'bg-red-400' }}"></div>
+                                    <div class="flex-shrink-0 h-3 w-3 rounded-full sensor-status-dot {{ $sensor->status === 'active' ? 'bg-green-400' : 'bg-red-400' }}"></div>
                                     <div class="ml-2">
                                         <div class="text-sm text-[#212121]">{{ $sensor->status === 'active' ? 'Active' : 'Inactive' }}</div>
                                         <div class="text-xs text-gray-500">Type: {{ strtoupper($sensor->type) }}</div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-8 py-5 whitespace-nowrap">
                                 <div class="text-sm text-[#212121]">Started: {{ $sensor->start_date->format('M d, Y') }}</div>
                                 <div class="text-sm text-gray-500">ID: {{ $sensor->sensor_id }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <td class="px-8 py-5 whitespace-nowrap text-right text-sm font-medium">
                                 <button onclick="showEditSensorModal({{ $sensor->id }})" class="text-[#212121] hover:text-opacity-70 p-1">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
@@ -110,49 +155,87 @@
         </div>
     </div>
 
+    <!-- Add custom styles -->
+    <style>
+        /* Remove hover and animation effects */
+        .sensor-row-hover {
+            transition: none;
+        }
+        
+        .sensor-status-dot {
+            transition: none;
+            animation: none;
+        }
+        
+        /* Clean up stat cards */
+        .grid > div {
+            border: 1px solid #eee;
+            border-radius: 0.5rem;
+            box-shadow: none;
+        }
+        
+        /* Update button styles */
+        button {
+            transition: none !important;
+            transform: none !important;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        /* Adjust modal styling */
+        .modal-content {
+            border-radius: 0.5rem;
+            box-shadow: none;
+            border: 1px solid #eee;
+        }
+    </style>
+
     <!-- Add Sensor Modal -->
     <div id="addSensorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-1/2 -translate-y-1/2 mx-auto p-8 w-[600px] shadow-xl rounded-lg bg-white">
-            <div class="text-center mb-6">
+        <div class="relative top-20 mx-auto p-6 w-[700px] shadow-xl rounded-lg bg-white">
+            <div class="mb-8">
                 <h3 class="text-xl font-bold text-[#212121]">Add New Gas Sensor</h3>
                 <p class="mt-1 text-sm text-gray-600">Enter the details of the new sensor</p>
             </div>
 
             <form class="space-y-6" id="sensorForm">
                 @csrf
-                <div class="grid grid-cols-2 gap-6">
+                <div class="grid grid-cols-2 gap-x-8 gap-y-6">
                     <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121]">Sensor Name</label>
-                        <div class="mt-2">
-                            <input type="text" name="name" required
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121]">
+                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor Name</label>
+                        <div class="mt-1">
+                            <input type="text" name="name" required placeholder="Enter sensor name"
+                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121]">Sensor ID</label>
-                        <div class="mt-2 relative">
-                            <input type="text" name="sensor_id" readonly required
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] bg-gray-50">
+                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor ID</label>
+                        <div class="mt-1 relative">
+                            <input type="text" name="sensor_id" readonly required placeholder="Click generate to create ID"
+                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] bg-gray-50 text-sm">
                             <button type="button" onclick="generateSensorId()" 
-                                class="absolute right-2 top-2 px-2 py-1 text-xs bg-[#212121] text-white rounded hover:bg-opacity-90">
+                                class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs bg-[#212121] text-white rounded-md hover:bg-opacity-90">
                                 Generate
                             </button>
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121]">Location</label>
-                        <div class="mt-2">
-                            <input type="text" name="location" required
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121]">
+                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Location</label>
+                        <div class="mt-1">
+                            <input type="text" name="location" required placeholder="Enter sensor location"
+                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121]">Sensor Type</label>
-                        <div class="mt-2">
-                            <select name="type" required class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121]">
+                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor Type</label>
+                        <div class="mt-1">
+                            <select name="type" required 
+                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121] text-sm">
                                 <option value="">Select a type...</option>
                                 <option value="co2">CO2 Sensor</option>
                                 <option value="no2">NO2 Sensor</option>
@@ -162,37 +245,37 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121]">Threshold Value (ppm)</label>
-                        <div class="mt-2">
-                            <input type="number" name="threshold_value" required
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121]">
+                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Threshold Value (ppm)</label>
+                        <div class="mt-1">
+                            <input type="number" name="threshold_value" required placeholder="Enter threshold value"
+                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121]">Start Date</label>
-                        <div class="mt-2">
+                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Start Date</label>
+                        <div class="mt-1">
                             <input type="date" name="start_date" required
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121]">
+                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121] text-sm">
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium leading-6 text-[#212121]">Notes</label>
-                    <div class="mt-2">
-                        <textarea name="notes" rows="3"
-                            class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121]"></textarea>
+                <div class="mt-6">
+                    <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Notes</label>
+                    <div class="mt-1">
+                        <textarea name="notes" rows="3" placeholder="Add any additional notes here (optional)"
+                            class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm"></textarea>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-6">
+                <div class="flex justify-end gap-3 pt-8 mt-6 border-t border-gray-100">
                     <button type="button" onclick="hideAddSensorModal()" 
-                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-[#212121] hover:bg-gray-50">
+                        class="px-5 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-[#212121] hover:bg-gray-50 transition-colors">
                         Cancel
                     </button>
                     <button type="submit" 
-                        class="px-4 py-2 bg-[#212121] text-white rounded-lg text-sm font-medium hover:bg-opacity-90">
+                        class="px-5 py-2.5 bg-[#212121] text-white rounded-lg text-sm font-medium hover:bg-opacity-90 transition-colors">
                         Add Sensor
                     </button>
                 </div>
