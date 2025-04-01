@@ -73,11 +73,19 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
                                 </button>
-                                <button onclick="showDeactivateModal({{ $sensor->id }})" class="text-yellow-600 hover:text-yellow-700 p-1">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                    </svg>
-                                </button>
+                                @if($sensor->status === 'active')
+                                    <button onclick="showDeactivateModal({{ $sensor->id }})" class="text-yellow-600 hover:text-yellow-700 p-1">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                    </button>
+                                @else
+                                    <button onclick="showActivateModal({{ $sensor->id }})" class="text-green-600 hover:text-green-700 p-1">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                                        </svg>
+                                    </button>
+                                @endif
                                 <button onclick="showDeleteModal({{ $sensor->id }})" class="text-red-600 hover:text-red-700 p-1">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -200,7 +208,7 @@
                 <p class="mt-1 text-sm text-gray-600">Update sensor details</p>
             </div>
 
-            <form id="editSensorForm" class="space-y-6">
+            <form id="editSensorForm" class="space-y-6" onsubmit="updateSensor(event)">
                 @csrf
                 <input type="hidden" name="sensor_id" id="edit_sensor_id">
                 <div class="grid grid-cols-2 gap-6">
@@ -325,6 +333,29 @@
         </div>
     </div>
 
+    <!-- Activate Confirmation Dialog -->
+    <div id="activateModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-1/2 -translate-y-1/2 mx-auto p-8 w-[400px] shadow-xl rounded-lg bg-white">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-[#212121] mb-2">Activate Sensor</h3>
+                <p class="text-sm text-gray-500">Are you sure you want to reactivate this sensor? It will start collecting data again.</p>
+                <div class="flex justify-center gap-3 mt-6">
+                    <button onclick="closeActivateModal()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button onclick="activateSensor()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
+                        Activate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentSensorId;
 
@@ -394,12 +425,53 @@
             fetch(`/admin/sensors/${id}/edit`)
                 .then(response => response.json())
                 .then(sensor => {
+                    // Handle date format for the input
+                    if (sensor.start_date) {
+                        const date = new Date(sensor.start_date);
+                        sensor.start_date = date.toISOString().split('T')[0];
+                    }
+                    
                     Object.keys(sensor).forEach(key => {
                         const input = document.getElementById(`edit_${key}`);
                         if (input) input.value = sensor[key];
                     });
                     document.getElementById('editSensorModal').classList.remove('hidden');
                 });
+        }
+
+        function updateSensor(e) {
+            e.preventDefault();
+            
+            const form = document.getElementById('editSensorForm');
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                if (key !== '_token') {
+                    data[key] = value;
+                }
+            });
+
+            fetch(`/admin/sensors/${currentSensorId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to update sensor');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update sensor');
+            });
         }
 
         function showDeactivateModal(id) {
@@ -410,6 +482,11 @@
         function showDeleteModal(id) {
             currentSensorId = id;
             document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function showActivateModal(id) {
+            currentSensorId = id;
+            document.getElementById('activateModal').classList.remove('hidden');
         }
 
         function deactivateSensor() {
@@ -431,6 +508,27 @@
             })
             .catch(error => alert('Failed to deactivate sensor'))
             .finally(() => closeDeactivateModal());
+        }
+
+        function activateSensor() {
+            fetch(`/admin/sensors/${currentSensorId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ status: 'active' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => alert('Failed to activate sensor'))
+            .finally(() => closeActivateModal());
         }
 
         function deleteSensor() {
@@ -463,6 +561,10 @@
 
         function closeDeleteModal() {
             document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        function closeActivateModal() {
+            document.getElementById('activateModal').classList.add('hidden');
         }
     </script>
 </x-admin-layout>
