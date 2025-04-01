@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\Sensor;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -239,7 +240,45 @@ class AdminDashboardController extends Controller
 
     public function settings()
     {
-        return view('admin.settings');
+        try {
+            $settings = SystemSetting::all()->pluck('value', 'key')->toArray();
+        } catch (\Exception $e) {
+            // If table doesn't exist or other error, return default settings
+            $settings = [
+                'system_name' => 'ClearSky',
+                'timezone' => 'UTC',
+                'data_retention' => 30,
+                'enable_2fa' => false,
+                'force_ssl' => true,
+                'session_timeout' => 120,
+            ];
+        }
+        
+        return view('admin.settings', compact('settings'));
+    }
+
+    public function updateSettings(Request $request)
+    {
+        foreach ($request->all() as $key => $value) {
+            SystemSetting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Settings updated successfully'
+        ]);
+    }
+
+    public function clearCache()
+    {
+        \Artisan::call('cache:clear');
+        return response()->json([
+            'success' => true,
+            'message' => 'Cache cleared successfully'
+        ]);
     }
 
     public function destroy(Admin $admin)
@@ -266,5 +305,43 @@ class AdminDashboardController extends Controller
                 'message' => 'Failed to delete admin'
             ], 500);
         }
+    }
+
+    public function profile()
+    {
+        return view('admin.profile');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $admin = auth('admin')->user();
+        $admin->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully'
+        ]);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => 'required|current_password:admin',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $admin = auth('admin')->user();
+        $admin->update([
+            'password' => Hash::make($validated['password'])
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully'
+        ]);
     }
 }

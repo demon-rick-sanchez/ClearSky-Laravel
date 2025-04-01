@@ -30,6 +30,10 @@ Route::prefix('admin')->group(function () {
         Route::post('/logout', [AdminDashboardController::class, 'logout'])->name('admin.logout');
         Route::delete('/admins/{admin}', [AdminDashboardController::class, 'destroy'])->name('admin.destroy');
 
+        Route::get('/profile', [AdminDashboardController::class, 'profile'])->name('admin.profile');
+        Route::post('/profile/update', [AdminDashboardController::class, 'updateProfile'])->name('admin.profile.update');
+        Route::post('/profile/password', [AdminDashboardController::class, 'updatePassword'])->name('admin.profile.password');
+
         Route::prefix('sensors')->group(function () {
             Route::get('/{sensor}/edit', [AdminDashboardController::class, 'editSensor'])->name('admin.sensors.edit');
             Route::put('/{sensor}', [AdminDashboardController::class, 'updateSensor'])->name('admin.sensors.update');
