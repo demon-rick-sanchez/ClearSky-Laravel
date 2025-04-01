@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\SimulationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -21,7 +22,8 @@ Route::prefix('admin')->group(function () {
         Route::get('/sensors', [AdminDashboardController::class, 'sensors'])->name('admin.sensors');
         Route::post('/sensors/generate-id', [AdminDashboardController::class, 'generateSensorId'])->name('admin.generate-sensor-id');
         Route::post('/sensors/store', [AdminDashboardController::class, 'storeSensor'])->name('admin.sensors.store');
-        Route::get('/simulation', [AdminDashboardController::class, 'simulation'])->name('admin.simulation');
+        Route::get('/simulation', [SimulationController::class, 'index'])->name('admin.simulation');
+        Route::post('/simulation/generate', [SimulationController::class, 'generateData'])->name('admin.simulation.generate');
         Route::get('/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
         Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
         Route::get('/settings', [AdminDashboardController::class, 'settings'])->name('admin.settings');
@@ -33,6 +35,12 @@ Route::prefix('admin')->group(function () {
             Route::put('/{sensor}', [AdminDashboardController::class, 'updateSensor'])->name('admin.sensors.update');
             Route::put('/{sensor}/status', [AdminDashboardController::class, 'updateSensorStatus'])->name('admin.sensors.status');
             Route::delete('/{sensor}', [AdminDashboardController::class, 'deleteSensor'])->name('admin.sensors.delete');
+        });
+
+        Route::prefix('simulation')->group(function () {
+            Route::post('/{sensor}/settings', [SimulationController::class, 'updateSettings']);
+            Route::post('/{sensor}/toggle', [SimulationController::class, 'toggleSimulation']);
+            Route::get('/{sensor}/logs', [SimulationController::class, 'getSimulationLogs']);
         });
     });
 
