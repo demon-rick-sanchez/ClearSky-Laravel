@@ -1,4 +1,8 @@
 <x-admin-layout>
+    <!-- Add Leaflet CSS and JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <!-- Header Section with Add Button and Stats -->
     <div class="mb-6 space-y-4">
         <div class="flex justify-between items-center">
@@ -194,7 +198,7 @@
 
     <!-- Add Sensor Modal -->
     <div id="addSensorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-6 w-[700px] shadow-xl rounded-lg bg-white">
+        <div class="relative top-20 mx-auto p-6 w-[800px] shadow-xl rounded-lg bg-white"> <!-- Increased width for map -->
             <div class="mb-8">
                 <h3 class="text-xl font-bold text-[#212121]">Add New Gas Sensor</h3>
                 <p class="mt-1 text-sm text-gray-600">Enter the details of the new sensor</p>
@@ -203,65 +207,76 @@
             <form class="space-y-6" id="sensorForm">
                 @csrf
                 <div class="grid grid-cols-2 gap-x-8 gap-y-6">
-                    <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor Name</label>
-                        <div class="mt-1">
-                            <input type="text" name="name" required placeholder="Enter sensor name"
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
+                    <!-- Left column for form fields -->
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor Name</label>
+                            <div class="mt-1">
+                                <input type="text" name="name" required placeholder="Enter sensor name"
+                                    class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor ID</label>
+                            <div class="mt-1 relative">
+                                <input type="text" name="sensor_id" readonly required placeholder="Click generate to create ID"
+                                    class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] bg-gray-50 text-sm">
+                                <button type="button" onclick="generateSensorId()" 
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs bg-[#212121] text-white rounded-md hover:bg-opacity-90">
+                                    Generate
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Location</label>
+                            <div class="mt-1">
+                                <input type="text" id="location-input" name="location" required placeholder="Enter sensor location"
+                                    class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
+                                <input type="hidden" id="lat-input" name="lat">
+                                <input type="hidden" id="lng-input" name="lng">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor Type</label>
+                            <div class="mt-1">
+                                <select name="type" required 
+                                    class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121] text-sm">
+                                    <option value="">Select a type...</option>
+                                    <option value="co2">CO2 Sensor</option>
+                                    <option value="no2">NO2 Sensor</option>
+                                    <option value="pm25">PM2.5 Sensor</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Threshold Value (ppm)</label>
+                            <div class="mt-1">
+                                <input type="number" name="threshold_value" required placeholder="Enter threshold value"
+                                    class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Start Date</label>
+                            <div class="mt-1">
+                                <input type="date" name="start_date" required
+                                    class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121] text-sm">
+                            </div>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor ID</label>
-                        <div class="mt-1 relative">
-                            <input type="text" name="sensor_id" readonly required placeholder="Click generate to create ID"
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] bg-gray-50 text-sm">
-                            <button type="button" onclick="generateSensorId()" 
-                                class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs bg-[#212121] text-white rounded-md hover:bg-opacity-90">
-                                Generate
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Location</label>
-                        <div class="mt-1">
-                            <input type="text" name="location" required placeholder="Enter sensor location"
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Sensor Type</label>
-                        <div class="mt-1">
-                            <select name="type" required 
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121] text-sm">
-                                <option value="">Select a type...</option>
-                                <option value="co2">CO2 Sensor</option>
-                                <option value="no2">NO2 Sensor</option>
-                                <option value="pm25">PM2.5 Sensor</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Threshold Value (ppm)</label>
-                        <div class="mt-1">
-                            <input type="number" name="threshold_value" required placeholder="Enter threshold value"
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] placeholder:text-gray-400 focus:border-[#212121] focus:ring-[#212121] text-sm">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Start Date</label>
-                        <div class="mt-1">
-                            <input type="date" name="start_date" required
-                                class="block w-full rounded-lg border border-gray-200 px-4 py-3 text-[#212121] focus:border-[#212121] focus:ring-[#212121] text-sm">
-                        </div>
+                    <!-- Right column for map -->
+                    <div class="space-y-4">
+                        <label class="block text-sm font-medium leading-6 text-[#212121]">Pick Location on Map</label>
+                        <div id="add-sensor-map" class="h-[400px] rounded-lg border border-gray-200"></div>
                     </div>
                 </div>
 
-                <div class="mt-6">
+                <div>
                     <label class="block text-sm font-medium leading-6 text-[#212121] mb-2">Notes</label>
                     <div class="mt-1">
                         <textarea name="notes" rows="3" placeholder="Add any additional notes here (optional)"
@@ -440,7 +455,69 @@
     </div>
 
     <script>
+        // Global variables
         let currentSensorId;
+        let addSensorMap;
+        let currentMarker;
+
+        // Modal functions
+        window.showAddSensorModal = function() {
+            document.getElementById('addSensorModal').classList.remove('hidden');
+            generateSensorId();
+            initializeMap();
+        };
+
+        window.hideAddSensorModal = function() {
+            document.getElementById('addSensorModal').classList.add('hidden');
+        };
+
+        window.showEditSensorModal = function(id) {
+            currentSensorId = id;
+            fetch(`/admin/sensors/${id}/edit`)
+                .then(response => response.json())
+                .then(sensor => {
+                    if (sensor.start_date) {
+                        const date = new Date(sensor.start_date);
+                        sensor.start_date = date.toISOString().split('T')[0];
+                    }
+                    Object.keys(sensor).forEach(key => {
+                        const input = document.getElementById(`edit_${key}`);
+                        if (input) input.value = sensor[key];
+                    });
+                    document.getElementById('editSensorModal').classList.remove('hidden');
+                });
+        };
+
+        // Helper functions
+        function initializeMap() {
+            if (!addSensorMap) {
+                setTimeout(() => {
+                    addSensorMap = L.map('add-sensor-map').setView([6.9271, 79.8612], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(addSensorMap);
+
+                    addSensorMap.on('click', function(e) {
+                        const { lat, lng } = e.latlng;
+                        document.getElementById('lat-input').value = lat;
+                        document.getElementById('lng-input').value = lng;
+                        
+                        if (currentMarker) {
+                            currentMarker.setLatLng([lat, lng]);
+                        } else {
+                            currentMarker = L.marker([lat, lng]).addTo(addSensorMap);
+                        }
+                        
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const locationName = data.display_name.split(',')[0];
+                                document.getElementById('location-input').value = locationName;
+                            });
+                    });
+                }, 100);
+            }
+        }
 
         function generateSensorId() {
             fetch('/admin/sensors/generate-id', {
@@ -471,6 +548,10 @@
                 }
             });
 
+            // Add latitude and longitude from hidden inputs
+            data.latitude = document.getElementById('lat-input').value;
+            data.longitude = document.getElementById('lng-input').value;
+
             fetch('/admin/sensors/store', {
                 method: 'POST',
                 headers: {
@@ -493,161 +574,5 @@
                 alert('Failed to add sensor');
             });
         });
-
-        function showAddSensorModal() {
-            document.getElementById('addSensorModal').classList.remove('hidden');
-            generateSensorId();
-        }
-
-        function hideAddSensorModal() {
-            document.getElementById('addSensorModal').classList.add('hidden');
-        }
-
-        function showEditSensorModal(id) {
-            currentSensorId = id;
-            fetch(`/admin/sensors/${id}/edit`)
-                .then(response => response.json())
-                .then(sensor => {
-                    // Handle date format for the input
-                    if (sensor.start_date) {
-                        const date = new Date(sensor.start_date);
-                        sensor.start_date = date.toISOString().split('T')[0];
-                    }
-                    
-                    Object.keys(sensor).forEach(key => {
-                        const input = document.getElementById(`edit_${key}`);
-                        if (input) input.value = sensor[key];
-                    });
-                    document.getElementById('editSensorModal').classList.remove('hidden');
-                });
-        }
-
-        function updateSensor(e) {
-            e.preventDefault();
-            
-            const form = document.getElementById('editSensorForm');
-            const formData = new FormData(form);
-            const data = {};
-            formData.forEach((value, key) => {
-                if (key !== '_token') {
-                    data[key] = value;
-                }
-            });
-
-            fetch(`/admin/sensors/${currentSensorId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert(data.message || 'Failed to update sensor');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to update sensor');
-            });
-        }
-
-        function showDeactivateModal(id) {
-            currentSensorId = id;
-            document.getElementById('deactivateModal').classList.remove('hidden');
-        }
-
-        function showDeleteModal(id) {
-            currentSensorId = id;
-            document.getElementById('deleteModal').classList.remove('hidden');
-        }
-
-        function showActivateModal(id) {
-            currentSensorId = id;
-            document.getElementById('activateModal').classList.remove('hidden');
-        }
-
-        function deactivateSensor() {
-            fetch(`/admin/sensors/${currentSensorId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ status: 'inactive' })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => alert('Failed to deactivate sensor'))
-            .finally(() => closeDeactivateModal());
-        }
-
-        function activateSensor() {
-            fetch(`/admin/sensors/${currentSensorId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ status: 'active' })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => alert('Failed to activate sensor'))
-            .finally(() => closeActivateModal());
-        }
-
-        function deleteSensor() {
-            fetch(`/admin/sensors/${currentSensorId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload();
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(error => alert('Failed to delete sensor'))
-            .finally(() => closeDeleteModal());
-        }
-
-        function closeEditModal() {
-            document.getElementById('editSensorModal').classList.add('hidden');
-        }
-
-        function closeDeactivateModal() {
-            document.getElementById('deactivateModal').classList.add('hidden');
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.add('hidden');
-        }
-
-        function closeActivateModal() {
-            document.getElementById('activateModal').classList.add('hidden');
-        }
     </script>
 </x-admin-layout>

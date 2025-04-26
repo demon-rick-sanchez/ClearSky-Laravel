@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+// Add API routes for sensor data
+Route::get('/api/sensors', [DashboardController::class, 'getSensors']);
+Route::get('/api/sensors/{sensor}/readings', [DashboardController::class, 'getSensorReadings']);
+Route::get('/api/alerts', [DashboardController::class, 'getAlerts']);
+
 Route::prefix('admin')->group(function () {
     // Public routes
     Route::middleware(['web', 'guest:admin'])->group(function () {

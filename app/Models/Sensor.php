@@ -15,10 +15,14 @@ class Sensor extends Model
         'start_date',
         'notes',
         'status',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'threshold_value' => 'float',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 }
