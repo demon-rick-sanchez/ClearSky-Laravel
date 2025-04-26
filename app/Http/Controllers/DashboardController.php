@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sensor;
+use App\Models\CustomAlert;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -47,14 +49,16 @@ class DashboardController extends Controller
     public function getAlerts()
     {
         $alerts = [];
-        $sensors = Sensor::where('status', 'active')->get();
         
+        // Get sensor-based alerts
+        $sensors = Sensor::where('status', 'active')->get();
         foreach ($sensors as $sensor) {
             $readings = Cache::get("sensor_{$sensor->id}_readings", []);
             $lastReading = end($readings);
             
             if ($lastReading && $lastReading['value'] > $sensor->threshold_value) {
                 $alerts[] = [
+                    'id' => 'sensor_' . $sensor->id,
                     'sensor_id' => $sensor->sensor_id,
                     'sensor_name' => $sensor->name,
                     'value' => $lastReading['value'],
@@ -65,12 +69,33 @@ class DashboardController extends Controller
             }
         }
 
-        // Sort by timestamp descending
-        usort($alerts, function($a, $b) {
-            return strtotime($b['timestamp']) - strtotime($a['timestamp']);
-        });
+        // Get custom alerts
+        $customAlerts = CustomAlert::where('is_active', true)
+            ->where(function($query) {
+                $query->where('target_type', 'all')
+                    ->orWhere(function($q) {
+                        $q->where('target_type', 'area')
+                            ->whereIn('area_id', auth()->user()->alert_preferences['monitored_sensors'] ?? []);
+                    });
+            })
+            ->get()
+            ->map(function($alert) {
+                return [
+                    'id' => 'custom_' . $alert->id,
+                    'message' => $alert->message,
+                    'type' => $alert->type,
+                    'timestamp' => $alert->created_at->toIso8601String(),
+                    'location' => $alert->sensor ? $alert->sensor->location : null
+                ];
+            });
 
-        return response()->json($alerts);
+        // Merge and sort all alerts
+        $allAlerts = collect(array_merge($alerts, $customAlerts->toArray()))
+            ->sortByDesc('timestamp')
+            ->values()
+            ->all();
+
+        return response()->json($allAlerts);
     }
 
     private function calculateTrend($readings)

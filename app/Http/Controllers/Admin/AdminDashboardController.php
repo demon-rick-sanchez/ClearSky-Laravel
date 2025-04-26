@@ -245,11 +245,6 @@ class AdminDashboardController extends Controller
         return view('admin.simulation');
     }
 
-    public function alerts()
-    {
-        return view('admin.alerts');
-    }
-
     public function users()
     {
         $admins = Admin::all();

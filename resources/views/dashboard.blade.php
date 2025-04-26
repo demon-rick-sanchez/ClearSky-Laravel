@@ -334,14 +334,30 @@
                 return;
             }
 
-            container.innerHTML = alerts.slice(0, 2).map(alert => `
-                <div class="flex items-center gap-2 px-3 py-1.5 bg-${alert.type === 'critical' ? 'red' : 'yellow'}-50 rounded-md">
-                    <span class="alert-badge alert-badge-${alert.type}">${alert.type === 'critical' ? 'Critical' : 'Warning'}</span>
-                    <span class="text-${alert.type === 'critical' ? 'red' : 'yellow'}-700 text-sm">
-                        ${alert.sensor_name}: ${alert.value} (threshold: ${alert.threshold})
-                    </span>
-                </div>
-            `).join('');
+            container.innerHTML = alerts.slice(0, 2).map(alert => {
+                if (alert.message) {
+                    // Custom alert
+                    return `
+                        <div class="flex items-center gap-2 px-3 py-1.5 bg-${alert.type === 'critical' ? 'red' : 'yellow'}-50 rounded-md">
+                            <span class="alert-badge alert-badge-${alert.type}">${alert.type === 'critical' ? 'Critical' : 'Warning'}</span>
+                            <span class="text-${alert.type === 'critical' ? 'red' : 'yellow'}-700 text-sm">
+                                ${alert.message}
+                                ${alert.location ? `(${alert.location})` : ''}
+                            </span>
+                        </div>
+                    `;
+                } else {
+                    // Sensor alert
+                    return `
+                        <div class="flex items-center gap-2 px-3 py-1.5 bg-${alert.type === 'critical' ? 'red' : 'yellow'}-50 rounded-md">
+                            <span class="alert-badge alert-badge-${alert.type}">${alert.type === 'critical' ? 'Critical' : 'Warning'}</span>
+                            <span class="text-${alert.type === 'critical' ? 'red' : 'yellow'}-700 text-sm">
+                                ${alert.sensor_name}: ${alert.value} (threshold: ${alert.threshold})
+                            </span>
+                        </div>
+                    `;
+                }
+            }).join('');
         }
 
         // Initialize trends chart
