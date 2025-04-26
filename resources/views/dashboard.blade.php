@@ -93,11 +93,11 @@
                 <div class="flex items-center gap-4">
                     <div class="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded-md">
                         <span class="alert-badge alert-badge-critical">Critical</span>
-                        <span class="text-red-700 text-sm">High PM2.5 levels at Downtown (SNR-002)</span>
+                        <span class="text-red-700 text-sm">High PM2.5 levels at Maradana (SNR-012)</span>
                     </div>
                     <div class="flex items-center gap-2 px-3 py-1.5 bg-yellow-50 rounded-md">
                         <span class="alert-badge alert-badge-warning">Warning</span>
-                        <span class="text-yellow-700 text-sm">Moderate AQI at Central Park (SNR-001)</span>
+                        <span class="text-yellow-700 text-sm">Moderate AQI at Pettah (SNR-002)</span>
                     </div>
                 </div>
                 <button onclick="viewAllAlerts()" class="btn btn-secondary">
@@ -175,9 +175,21 @@
                         <h2 class="title">Historical Trends</h2>
                         <div class="flex items-center gap-4">
                             <select id="sensor-select" class="select-custom">
-                                <option value="SNR-001">Sensor SNR-001</option>
-                                <option value="SNR-002">Sensor SNR-002</option>
-                                <option value="SNR-003">Sensor SNR-003</option>
+                                <option value="SNR-001">Fort</option>
+                                <option value="SNR-002">Pettah</option>
+                                <option value="SNR-003">Slave Island</option>
+                                <option value="SNR-004">Kollupitiya</option>
+                                <option value="SNR-005">Bambalapitiya</option>
+                                <option value="SNR-006">Wellawatte</option>
+                                <option value="SNR-007">Dehiwala</option>
+                                <option value="SNR-008">Mount Lavinia</option>
+                                <option value="SNR-009">Ratmalana</option>
+                                <option value="SNR-010">Moratuwa</option>
+                                <option value="SNR-011">Borella</option>
+                                <option value="SNR-012">Maradana</option>
+                                <option value="SNR-013">Dematagoda</option>
+                                <option value="SNR-014">Mattakkuliya</option>
+                                <option value="SNR-015">Kotahena</option>
                             </select>
                             <select id="time-range" class="select-custom">
                                 <option value="day">Last 24 Hours</option>
@@ -204,17 +216,29 @@
             alert('Viewing all alerts...');
         }
 
-        // Initialize map with custom styling
-        const map = L.map('map').setView([1.3521, 103.8198], 12);
+        // Initialize map centered on Colombo
+        const map = L.map('map').setView([6.9271, 79.8612], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Enhanced sensor data
+        // Sensor data for Colombo locations
         const sensors = [
-            { id: 'SNR-001', name: 'Central Park', lat: 1.3521, lng: 103.8198, aqi: 45, status: 'good', trend: 'stable' },
-            { id: 'SNR-002', name: 'Downtown', lat: 1.3423, lng: 103.8353, aqi: 75, status: 'moderate', trend: 'increasing' },
-            { id: 'SNR-003', name: 'Industrial Zone', lat: 1.3644, lng: 103.8277, aqi: 160, status: 'unhealthy', trend: 'decreasing' }
+            { id: 'SNR-001', name: 'Fort', lat: 6.9271, lng: 79.8612, aqi: 45, status: 'good', trend: 'stable' },
+            { id: 'SNR-002', name: 'Pettah', lat: 6.9344, lng: 79.8528, aqi: 85, status: 'moderate', trend: 'increasing' },
+            { id: 'SNR-003', name: 'Slave Island', lat: 6.9261, lng: 79.8473, aqi: 160, status: 'unhealthy', trend: 'decreasing' },
+            { id: 'SNR-004', name: 'Kollupitiya', lat: 6.9174, lng: 79.8483, aqi: 55, status: 'moderate', trend: 'stable' },
+            { id: 'SNR-005', name: 'Bambalapitiya', lat: 6.8913, lng: 79.8567, aqi: 42, status: 'good', trend: 'stable' },
+            { id: 'SNR-006', name: 'Wellawatte', lat: 6.8741, lng: 79.8597, aqi: 75, status: 'moderate', trend: 'increasing' },
+            { id: 'SNR-007', name: 'Dehiwala', lat: 6.8501, lng: 79.8657, aqi: 38, status: 'good', trend: 'stable' },
+            { id: 'SNR-008', name: 'Mount Lavinia', lat: 6.8296, lng: 79.8642, aqi: 45, status: 'good', trend: 'stable' },
+            { id: 'SNR-009', name: 'Ratmalana', lat: 6.8190, lng: 79.8685, aqi: 95, status: 'moderate', trend: 'increasing' },
+            { id: 'SNR-010', name: 'Moratuwa', lat: 6.7881, lng: 79.8828, aqi: 65, status: 'moderate', trend: 'stable' },
+            { id: 'SNR-011', name: 'Borella', lat: 6.9214, lng: 79.8778, aqi: 72, status: 'moderate', trend: 'stable' },
+            { id: 'SNR-012', name: 'Maradana', lat: 6.9278, lng: 79.8644, aqi: 110, status: 'unhealthy', trend: 'increasing' },
+            { id: 'SNR-013', name: 'Dematagoda', lat: 6.9336, lng: 79.8744, aqi: 88, status: 'moderate', trend: 'stable' },
+            { id: 'SNR-014', name: 'Mattakkuliya', lat: 6.9597, lng: 79.8786, aqi: 58, status: 'moderate', trend: 'decreasing' },
+            { id: 'SNR-015', name: 'Kotahena', lat: 6.9502, lng: 79.8583, aqi: 82, status: 'moderate', trend: 'increasing' }
         ];
 
         // Add markers to map
