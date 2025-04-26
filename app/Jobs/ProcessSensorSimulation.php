@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Sensor;
 use App\Models\SimulationSetting;
+use App\Events\SensorAlertEvent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,18 +42,20 @@ class ProcessSensorSimulation implements ShouldQueue
         $this->checkAlerts($sensor, $reading);
 
         // Schedule next run based on frequency
-        $this->dispatch(self::class)
-            ->delay(now()->addMinutes($this->settings['frequency']));
+        if ($sensor->simulationSetting->is_active) {
+            self::dispatch($this->sensorId, $this->settings)
+                ->delay(now()->addMinutes($this->settings['frequency']));
+        }
     }
 
     private function generateReading($sensor)
     {
-        $settings = $sensor->simulationSetting;
-        $min = $settings->min_value;
-        $max = $settings->max_value;
+        $settings = $this->settings;
+        $min = $settings['min_value'];
+        $max = $settings['max_value'];
 
         // Generate value based on pattern
-        $value = match($settings->pattern_type) {
+        $value = match($settings['pattern_type']) {
             'linear' => $this->generateLinearValue($min, $max),
             'cyclical' => $this->generateCyclicalValue($min, $max),
             default => $this->generateRandomValue($min, $max)
@@ -81,13 +84,17 @@ class ProcessSensorSimulation implements ShouldQueue
 
     private function checkAlerts($sensor, $reading)
     {
-        if ($reading['value'] > $sensor->threshold_value) {
-            // Trigger alert logic here
-            event(new SensorAlertEvent($sensor, $reading));
+        $thresholds = $this->settings['thresholds'];
+        
+        if ($reading['value'] >= $thresholds['critical']) {
+            // Trigger critical alert
+            event(new SensorAlertEvent($sensor, $reading, 'critical'));
+        } elseif ($reading['value'] >= $thresholds['warning']) {
+            // Trigger warning alert
+            event(new SensorAlertEvent($sensor, $reading, 'warning'));
         }
     }
 
-    // Helper methods for value generation
     private function generateRandomValue($min, $max)
     {
         return $min + (mt_rand() / mt_getrandmax()) * ($max - $min);
@@ -95,25 +102,36 @@ class ProcessSensorSimulation implements ShouldQueue
 
     private function generateLinearValue($min, $max)
     {
-        // Implement linear progression logic
-        $trend = Cache::get("sensor_{$this->sensorId}_trend", 0);
-        $value = $min + ($max - $min) * $trend;
+        // Get previous value from cache or start from min
+        $cacheKey = "sensor_{$this->sensorId}_linear_progress";
+        $progress = Cache::get($cacheKey, 0);
         
-        // Update trend (0 to 1)
-        $trend += 0.1;
-        if ($trend > 1) $trend = 0;
-        Cache::put("sensor_{$this->sensorId}_trend", $trend, now()->addDay());
-
-        return $value;
+        // Increment progress
+        $progress += 0.1; // Move 10% each time
+        if ($progress > 1) $progress = 0;
+        
+        Cache::put($cacheKey, $progress, now()->addDay());
+        
+        return $min + ($max - $min) * $progress;
     }
 
     private function generateCyclicalValue($min, $max)
     {
+        // Get current angle from cache or start from 0
+        $cacheKey = "sensor_{$this->sensorId}_cycle_angle";
+        $angle = Cache::get($cacheKey, 0);
+        
+        // Calculate value using sine wave
         $amplitude = ($max - $min) / 2;
         $center = $min + $amplitude;
-        $time = time();
+        $value = $center + $amplitude * sin($angle);
         
-        // Create a sinusoidal pattern
-        return $center + $amplitude * sin($time / 3600); // 1-hour cycle
+        // Increment angle
+        $angle += pi() / 8; // 22.5 degrees each time
+        if ($angle >= 2 * pi()) $angle = 0;
+        
+        Cache::put($cacheKey, $angle, now()->addDay());
+        
+        return $value;
     }
 }

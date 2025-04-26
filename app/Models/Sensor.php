@@ -28,4 +28,9 @@ class Sensor extends Model
         'latitude' => 'float',
         'longitude' => 'float',
     ];
+
+    public function simulationSetting()
+    {
+        return $this->hasOne(SimulationSetting::class);
+    }
 }
