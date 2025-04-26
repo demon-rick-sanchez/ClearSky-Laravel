@@ -44,6 +44,9 @@ Route::prefix('admin')->group(function () {
             Route::put('/{sensor}', [AdminDashboardController::class, 'updateSensor'])->name('admin.sensors.update');
             Route::put('/{sensor}/status', [AdminDashboardController::class, 'updateSensorStatus'])->name('admin.sensors.status');
             Route::delete('/{sensor}', [AdminDashboardController::class, 'deleteSensor'])->name('admin.sensors.delete');
+            Route::delete('/{sensor}', [App\Http\Controllers\Admin\SensorController::class, 'destroy'])->name('admin.sensors.destroy');
+            Route::post('/{sensor}/activate', [App\Http\Controllers\Admin\SensorController::class, 'activate'])->name('admin.sensors.activate');
+            Route::post('/{sensor}/deactivate', [App\Http\Controllers\Admin\SensorController::class, 'deactivate'])->name('admin.sensors.deactivate');
         });
 
         Route::prefix('simulation')->group(function () {

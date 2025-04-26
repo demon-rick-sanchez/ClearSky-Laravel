@@ -239,13 +239,23 @@
         function updateMap(sensors) {
             // Clear existing markers
             map.eachLayer((layer) => {
-                if (layer instanceof L.CircleMarker) {
+                if (layer instanceof L.Marker || layer instanceof L.CircleMarker) {
                     map.removeLayer(layer);
                 }
             });
 
+            // Keep the base tile layer
+            if (map.getZoom() < 12) {
+                map.setView([6.9271, 79.8612], 12);
+            }
+
             // Add new markers
             sensors.forEach(sensor => {
+                if (!sensor.lat || !sensor.lng) {
+                    console.warn(`Missing coordinates for sensor: ${sensor.id}`);
+                    return;
+                }
+
                 const color = sensor.aqi <= 50 ? '#10B981' : 
                             sensor.aqi <= 100 ? '#FBBF24' : 
                             sensor.aqi <= 150 ? '#FB923C' : '#EF4444';
@@ -268,7 +278,7 @@
                 marker.bindPopup(`
                     <div class="p-2">
                         <h3 class="font-bold text-lg mb-1">${sensor.name}</h3>
-                        <p class="text-sm text-gray-600 mb-2">${sensor.id}</p>
+                        <p class="text-sm text-gray-600 mb-2">${sensor.location}</p>
                         <div class="flex items-center gap-2 mb-3">
                             <span class="font-bold text-2xl" style="color: ${color}">${sensor.aqi}</span>
                             <span class="text-sm ${trendColor}">${trendIcon}</span>

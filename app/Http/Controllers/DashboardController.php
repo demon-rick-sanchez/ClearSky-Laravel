@@ -27,13 +27,11 @@ class DashboardController extends Controller
                     'id' => $sensor->sensor_id,
                     'name' => $sensor->name,
                     'location' => $sensor->location,
-                    'lat' => $this->extractLatitude($sensor->location),
-                    'lng' => $this->extractLongitude($sensor->location),
+                    'lat' => $sensor->latitude, // Use actual latitude from database
+                    'lng' => $sensor->longitude, // Use actual longitude from database
                     'aqi' => $lastReading['value'],
                     'status' => $this->getAqiStatus($lastReading['value']),
-                    'trend' => $trend,
-                    'type' => $sensor->type,
-                    'threshold' => $sensor->threshold_value
+                    'trend' => $trend
                 ];
             });
 
