@@ -61,6 +61,9 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [SimulationController::class, 'index'])->name('admin.simulation');
             Route::post('/{sensor}/settings', [SimulationController::class, 'updateSettings']);
             Route::post('/{sensor}/toggle', [SimulationController::class, 'toggleSimulation']);
+            Route::post('/{sensor}/save-data', [SimulationController::class, 'saveSimulationData'])->name('simulation.save-data');
+            Route::get('/history', [SimulationController::class, 'getHistory']);
+            Route::get('/data/{id}', [SimulationController::class, 'getSimulationData']);
             Route::get('/{sensor}/logs', [SimulationController::class, 'getSimulationLogs']);
             Route::get('/{sensor}/settings', [SimulationController::class, 'getSimulationSettings']);
             Route::get('/generate', [SimulationController::class, 'generateData']);

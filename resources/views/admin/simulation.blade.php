@@ -10,10 +10,16 @@
             <div class="bg-white rounded-lg border border-gray-200 p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold">Simulation Settings</h3>
-                    <button onclick="quickStartSimulation()" 
-                            class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
-                        Quick Start
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="auto-save" class="mr-2">
+                            <label for="auto-save" class="text-sm">Auto-save (5min)</label>
+                        </div>
+                        <button onclick="quickStartSimulation()" 
+                                class="px-3 py-1.5 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
+                            Quick Start
+                        </button>
+                    </div>
                 </div>
                 <form id="simulationForm" class="space-y-4">
                     @csrf
@@ -83,6 +89,14 @@
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold">Live Data</h3>
                     <div class="flex items-center gap-4">
+                        <button id="save-simulation-btn" 
+                                onclick="manualSaveSimulationData()"
+                                class="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 hidden">
+                            Save Data
+                        </button>
+                        <span id="countdown-timer" class="px-2 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800 hidden">
+                            00:00:00
+                        </span>
                         <span id="status-badge" class="px-2 py-1 text-sm font-medium rounded-full bg-gray-100 text-gray-800">
                             Inactive
                         </span>
@@ -102,11 +116,87 @@
         </div>
     </div>
 
+    <!-- Simulation History -->
+    <div class="mt-6">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold mb-4">Simulation History</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sensor</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pattern</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Min Value</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Max Value</th>
+                            <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="simulation-history" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         let simulationChart;
         let isSimulationActive = false;
+        let countdownInterval;
+        let simulationStartTime;
         const currentSensorSettings = {};
+        let autoSaveInterval;
+
+        function updateCountdownTimer() {
+            const timer = document.getElementById('countdown-timer');
+            const now = new Date().getTime();
+            const elapsedTime = Math.floor((now - simulationStartTime) / 1000);
+            
+            const hours = Math.floor(elapsedTime / 3600);
+            const minutes = Math.floor((elapsedTime % 3600) / 60);
+            const seconds = elapsedTime % 60;
+            
+            timer.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function startCountdown() {
+            const timer = document.getElementById('countdown-timer');
+            const saveButton = document.getElementById('save-simulation-btn');
+            timer.classList.remove('hidden');
+            saveButton.classList.remove('hidden');
+            simulationStartTime = new Date().getTime();
+            countdownInterval = setInterval(updateCountdownTimer, 1000);
+            startAutoSave();
+        }
+
+        function stopCountdown() {
+            const timer = document.getElementById('countdown-timer');
+            const saveButton = document.getElementById('save-simulation-btn');
+            timer.classList.add('hidden');
+            saveButton.classList.add('hidden');
+            clearInterval(countdownInterval);
+            stopAutoSave();
+        }
+
+        function startAutoSave() {
+            if (document.getElementById('auto-save').checked) {
+                autoSaveInterval = setInterval(async () => {
+                    if (isSimulationActive) {
+                        await manualSaveSimulationData();
+                        loadSimulationHistory();
+                    }
+                }, 5 * 60 * 1000);
+            }
+        }
+
+        function stopAutoSave() {
+            if (autoSaveInterval) {
+                clearInterval(autoSaveInterval);
+            }
+        }
 
         // Initialize Chart.js
         function initChart() {
@@ -165,7 +255,11 @@
                     }`;
 
                     if (isSimulationActive) {
+                        startCountdown();
                         updateChart();
+                    } else {
+                        stopCountdown();
+                        await saveSimulationData();
                     }
                 } else {
                     throw new Error(data.message || 'Failed to toggle simulation');
@@ -173,6 +267,75 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('Failed to toggle simulation: ' + error.message);
+            }
+        }
+
+        async function saveSimulationData() {
+            const sensorId = document.getElementById('sensor-select').value;
+            try {
+                const response = await fetch(`/admin/simulation/${sensorId}/save-data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    },
+                    body: JSON.stringify({
+                        duration: Math.floor((new Date().getTime() - simulationStartTime) / 1000)
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save simulation data');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Simulation data saved successfully');
+                }
+            } catch (error) {
+                console.error('Error saving simulation data:', error);
+            }
+        }
+
+        async function manualSaveSimulationData() {
+            const saveButton = document.getElementById('save-simulation-btn');
+            const originalText = saveButton.textContent;
+            saveButton.textContent = 'Saving...';
+            saveButton.disabled = true;
+
+            try {
+                const response = await fetch(`/admin/simulation/${document.getElementById('sensor-select').value}/save-data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    },
+                    body: JSON.stringify({
+                        duration: Math.floor((new Date().getTime() - simulationStartTime) / 1000)
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to save simulation data');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    saveButton.textContent = 'Saved!';
+                    setTimeout(() => {
+                        saveButton.textContent = originalText;
+                        saveButton.disabled = false;
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Error saving simulation data:', error);
+                saveButton.textContent = 'Save Failed';
+                setTimeout(() => {
+                    saveButton.textContent = originalText;
+                    saveButton.disabled = false;
+                }, 2000);
             }
         }
 
@@ -280,6 +443,55 @@
             }
         }
 
+        async function loadSimulationHistory() {
+            try {
+                const response = await fetch('/admin/simulation/history');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('simulation-history');
+                    tbody.innerHTML = data.history.map(record => `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${new Date(record.created_at).toLocaleString()}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${record.sensor_name}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${record.pattern_type}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${formatDuration(record.duration)}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${record.min_value}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${record.max_value}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <button onclick="viewSimulationData(${record.id})" 
+                                        class="text-blue-600 hover:text-blue-800">
+                                    View Data
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading simulation history:', error);
+            }
+        }
+
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainingSeconds = seconds % 60;
+            
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+        }
+
         // Load sensor settings when sensor changes
         async function loadSensorSettings(sensorId) {
             if (currentSensorSettings[sensorId]) {
@@ -306,6 +518,15 @@
             }
         }
 
+        // Auto-save checkbox event listener
+        document.getElementById('auto-save').addEventListener('change', function(e) {
+            if (e.target.checked && isSimulationActive) {
+                startAutoSave();
+            } else {
+                stopAutoSave();
+            }
+        });
+
         // Event Listeners
         document.getElementById('sensor-select').addEventListener('change', (e) => {
             loadSensorSettings(e.target.value);
@@ -324,6 +545,7 @@
             if (initialSensorId) {
                 loadSensorSettings(initialSensorId);
             }
+            loadSimulationHistory();
         });
     </script>
 </x-admin-layout>

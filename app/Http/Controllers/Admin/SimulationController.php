@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Sensor;
 use App\Models\SimulationSetting;
+use App\Models\SimulationData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -177,6 +178,100 @@ class SimulationController extends Controller
             'success' => true,
             'settings' => $settings
         ]);
+    }
+
+    public function saveSimulationData(Request $request, Sensor $sensor)
+    {
+        try {
+            $settings = $sensor->simulationSetting;
+            if (!$settings) {
+                return response()->json(['success' => false, 'message' => 'No simulation settings found'], 400);
+            }
+
+            $cacheKey = "sensor_{$sensor->id}_readings";
+            $readings = Cache::get($cacheKey, []);
+
+            SimulationData::create([
+                'sensor_id' => $sensor->id,
+                'pattern_type' => $settings->pattern_type,
+                'min_value' => $settings->min_value,
+                'max_value' => $settings->max_value,
+                'thresholds' => $settings->thresholds,
+                'duration' => $request->duration,
+                'readings' => $readings
+            ]);
+
+            // Clear the cache after saving
+            Cache::forget($cacheKey);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Simulation data saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving simulation data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save simulation data'
+            ], 500);
+        }
+    }
+
+    public function getHistory()
+    {
+        try {
+            $history = SimulationData::with('sensor')
+                ->latest()
+                ->take(50)
+                ->get()
+                ->map(function ($record) {
+                    return [
+                        'id' => $record->id,
+                        'sensor_name' => $record->sensor->name,
+                        'pattern_type' => $record->pattern_type,
+                        'min_value' => $record->min_value,
+                        'max_value' => $record->max_value,
+                        'duration' => $record->duration,
+                        'created_at' => $record->created_at
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'history' => $history
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching simulation history: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch simulation history'
+            ], 500);
+        }
+    }
+
+    public function getSimulationData($id)
+    {
+        try {
+            $data = SimulationData::findOrFail($id);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'sensor_name' => $data->sensor->name,
+                    'pattern_type' => $data->pattern_type,
+                    'min_value' => $data->min_value,
+                    'max_value' => $data->max_value,
+                    'duration' => $data->duration,
+                    'readings' => $data->readings,
+                    'created_at' => $data->created_at
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching simulation data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch simulation data'
+            ], 500);
+        }
     }
 
     private function generatePatternData($pattern, $min, $max, $duration)
