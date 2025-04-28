@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
-            SystemSettingsSeeder::class
+            SystemSettingsSeeder::class,
+            AlertSettingsSeeder::class,
         ]);
     }
 }

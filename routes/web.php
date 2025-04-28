@@ -3,9 +3,36 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\SimulationController;
+use App\Http\Controllers\AlertController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\Admin\AlertController as AdminAlertController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+// Static Pages
+Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/guidelines', [PageController::class, 'guidelines'])->name('guidelines');
+
+// Report Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reports/daily', [ReportController::class, 'downloadDaily'])->name('reports.daily');
+    Route::get('/reports/weekly', [ReportController::class, 'downloadWeekly'])->name('reports.weekly');
+    Route::post('/reports/custom', [ReportController::class, 'generateCustomReport'])->name('reports.custom');
+});
+
+// Add API routes for sensor data
+Route::get('/api/sensors', [DashboardController::class, 'getSensors']);
+Route::get('/api/sensors/{sensor}/readings', [DashboardController::class, 'getSensorReadings']);
+Route::get('/api/alerts', [DashboardController::class, 'getAlerts']);
+Route::get('/api/simulation-history', [DashboardController::class, 'getSimulationHistory']);
+Route::get('/api/simulation-history/{id}', [DashboardController::class, 'getSimulationRecord']);
+
+// User Alert Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/alerts', [AlertController::class, 'index'])->name('alerts');
+    Route::post('/alerts/preferences', [AlertController::class, 'savePreferences'])->name('alerts.preferences');
+});
 
 Route::prefix('admin')->group(function () {
     // Public routes
@@ -16,7 +43,7 @@ Route::prefix('admin')->group(function () {
         Route::post('/register', [AdminDashboardController::class, 'register'])->name('admin.store');
     });
 
-    // Protected routes - using full class name to avoid resolution issues
+    // Protected routes
     Route::middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
         Route::get('/sensors', [AdminDashboardController::class, 'sensors'])->name('admin.sensors');
@@ -24,7 +51,6 @@ Route::prefix('admin')->group(function () {
         Route::post('/sensors/store', [AdminDashboardController::class, 'storeSensor'])->name('admin.sensors.store');
         Route::get('/simulation', [SimulationController::class, 'index'])->name('admin.simulation');
         Route::post('/simulation/generate', [SimulationController::class, 'generateData'])->name('admin.simulation.generate');
-        Route::get('/alerts', [AdminDashboardController::class, 'alerts'])->name('admin.alerts');
         Route::get('/users', [AdminDashboardController::class, 'users'])->name('admin.users');
         Route::get('/settings', [AdminDashboardController::class, 'settings'])->name('admin.settings');
         Route::post('/logout', [AdminDashboardController::class, 'logout'])->name('admin.logout');
@@ -34,20 +60,36 @@ Route::prefix('admin')->group(function () {
         Route::post('/profile/update', [AdminDashboardController::class, 'updateProfile'])->name('admin.profile.update');
         Route::post('/profile/password', [AdminDashboardController::class, 'updatePassword'])->name('admin.profile.password');
 
+        // Sensor routes
         Route::prefix('sensors')->group(function () {
             Route::get('/{sensor}/edit', [AdminDashboardController::class, 'editSensor'])->name('admin.sensors.edit');
             Route::put('/{sensor}', [AdminDashboardController::class, 'updateSensor'])->name('admin.sensors.update');
             Route::put('/{sensor}/status', [AdminDashboardController::class, 'updateSensorStatus'])->name('admin.sensors.status');
             Route::delete('/{sensor}', [AdminDashboardController::class, 'deleteSensor'])->name('admin.sensors.delete');
+            Route::post('/{sensor}/activate', [\App\Http\Controllers\Admin\SensorController::class, 'activate'])->name('admin.sensors.activate');
+            Route::post('/{sensor}/deactivate', [\App\Http\Controllers\Admin\SensorController::class, 'deactivate'])->name('admin.sensors.deactivate');
         });
 
+        // Simulation routes
         Route::prefix('simulation')->group(function () {
+            Route::get('/', [SimulationController::class, 'index'])->name('admin.simulation');
             Route::post('/{sensor}/settings', [SimulationController::class, 'updateSettings']);
             Route::post('/{sensor}/toggle', [SimulationController::class, 'toggleSimulation']);
+            Route::post('/{sensor}/save-data', [SimulationController::class, 'saveSimulationData'])->name('simulation.save-data');
+            Route::get('/history', [SimulationController::class, 'getHistory']);
+            Route::get('/data/{id}', [SimulationController::class, 'getSimulationData']);
             Route::get('/{sensor}/logs', [SimulationController::class, 'getSimulationLogs']);
+            Route::get('/{sensor}/settings', [SimulationController::class, 'getSimulationSettings']);
+            Route::get('/generate', [SimulationController::class, 'generateData']);
+        });
+
+        // Alert routes
+        Route::prefix('alerts')->group(function () {
+            Route::get('/', [AdminAlertController::class, 'index'])->name('admin.alerts');
+            Route::post('/settings', [AdminAlertController::class, 'saveSettings'])->name('admin.alerts.settings');
+            Route::post('/custom', [AdminAlertController::class, 'sendCustomAlert'])->name('admin.alerts.custom');
+            Route::get('/active', [AdminAlertController::class, 'getActiveAlerts'])->name('admin.alerts.active');
+            Route::delete('/{alert}', [AdminAlertController::class, 'dismissAlert'])->name('admin.alerts.dismiss');
         });
     });
-
-    Route::get('/check-admins', [AdminDashboardController::class, 'listAdmins'])
-        ->name('admin.check');
 });

@@ -146,6 +146,8 @@ class AdminDashboardController extends Controller
                 'threshold_value' => 'required|numeric|min:0',
                 'start_date' => 'required|date',
                 'notes' => 'nullable|string',
+                'latitude' => 'required|numeric|between:-90,90',
+                'longitude' => 'required|numeric|between:-180,180',
             ]);
 
             $validated['status'] = 'active';
@@ -180,6 +182,8 @@ class AdminDashboardController extends Controller
                 'threshold_value' => 'required|numeric|min:0',
                 'start_date' => 'required|date',
                 'notes' => 'nullable|string',
+                'latitude' => 'required|numeric|between:-90,90',
+                'longitude' => 'required|numeric|between:-180,180',
             ]);
 
             $sensor->update($validated);
@@ -239,11 +243,6 @@ class AdminDashboardController extends Controller
     public function simulation()
     {
         return view('admin.simulation');
-    }
-
-    public function alerts()
-    {
-        return view('admin.alerts');
     }
 
     public function users()
