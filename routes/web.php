@@ -4,10 +4,15 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\SimulationController;
 use App\Http\Controllers\AlertController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\Admin\AlertController as AdminAlertController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+// Static Pages
+Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/guidelines', [PageController::class, 'guidelines'])->name('guidelines');
 
 // Add API routes for sensor data
 Route::get('/api/sensors', [DashboardController::class, 'getSensors']);
