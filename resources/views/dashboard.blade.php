@@ -175,21 +175,7 @@
                         <h2 class="title">Historical Trends</h2>
                         <div class="flex items-center gap-4">
                             <select id="sensor-select" class="select-custom">
-                                <option value="SNR-001">Fort</option>
-                                <option value="SNR-002">Pettah</option>
-                                <option value="SNR-003">Slave Island</option>
-                                <option value="SNR-004">Kollupitiya</option>
-                                <option value="SNR-005">Bambalapitiya</option>
-                                <option value="SNR-006">Wellawatte</option>
-                                <option value="SNR-007">Dehiwala</option>
-                                <option value="SNR-008">Mount Lavinia</option>
-                                <option value="SNR-009">Ratmalana</option>
-                                <option value="SNR-010">Moratuwa</option>
-                                <option value="SNR-011">Borella</option>
-                                <option value="SNR-012">Maradana</option>
-                                <option value="SNR-013">Dematagoda</option>
-                                <option value="SNR-014">Mattakkuliya</option>
-                                <option value="SNR-015">Kotahena</option>
+                                <!-- Will be populated dynamically -->
                             </select>
                             <select id="time-range" class="select-custom">
                                 <option value="day">Last 24 Hours</option>
@@ -199,7 +185,12 @@
                         </div>
                     </div>
                     <div class="p-4">
-                        <canvas id="trends-chart" height="200"></canvas>
+                        <div class="relative h-[300px]">
+                            <canvas id="trends-chart"></canvas>
+                            <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 hidden">
+                                <div class="text-gray-500">Loading data...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -327,9 +318,15 @@
         // Update sensor dropdown
         function updateSensorSelect(sensors) {
             const select = document.getElementById('sensor-select');
-            select.innerHTML = sensors.map(sensor => 
-                `<option value="${sensor.id}">${sensor.name}</option>`
-            ).join('');
+            select.innerHTML = '<option value="">Select Sensor</option>' + 
+                sensors.map(sensor => 
+                    `<option value="${sensor.id}">${sensor.name} - ${sensor.location}</option>`
+                ).join('');
+            
+            if (sensors.length > 0) {
+                select.value = sensors[0].id;
+                updateChart();
+            }
         }
 
         // Update stats cards
@@ -397,27 +394,30 @@
                 data: {
                     labels: [],
                     datasets: [{
-                        label: 'AQI',
+                        label: 'Sensor Readings',
                         data: [],
                         borderColor: '#3B82F6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         tension: 0.4,
-                        fill: true
+                        fill: true,
+                        pointRadius: 2,
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
-                    aspectRatio: 3,
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
                             grid: {
                                 color: 'rgba(156, 163, 175, 0.1)',
-                                drawBorder: false
                             }
                         },
                         x: {
@@ -435,11 +435,12 @@
 
         // Fetch sensor readings and update chart
         async function fetchSensorReadings(sensorId, timeRange) {
+            document.getElementById('chart-loading').classList.remove('hidden');
+            
             try {
                 const response = await fetch(`/api/sensors/${sensorId}/readings`);
                 const readings = await response.json();
                 
-                // Filter readings based on time range
                 const now = new Date();
                 const filtered = readings.filter(reading => {
                     const readingDate = new Date(reading.timestamp);
@@ -447,20 +448,21 @@
                     
                     return timeRange === 'day' ? diffHours <= 24 :
                            timeRange === 'week' ? diffHours <= 168 :
-                           diffHours <= 720; // month (30 days)
+                           diffHours <= 720;
                 });
 
-                // Update chart
                 trendChart.data.labels = filtered.map(r => {
                     const date = new Date(r.timestamp);
-                    return timeRange === 'day' ? date.getHours() + ':00' :
-                           timeRange === 'week' ? date.toLocaleDateString('en-US', { weekday: 'short' }) :
-                           date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    return timeRange === 'day' ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) :
+                           timeRange === 'week' ? date.toLocaleDateString([], { weekday: 'short' }) :
+                           date.toLocaleDateString([], { month: 'short', day: 'numeric' });
                 });
                 trendChart.data.datasets[0].data = filtered.map(r => r.value);
                 trendChart.update();
             } catch (error) {
                 console.error('Error fetching readings:', error);
+            } finally {
+                document.getElementById('chart-loading').classList.add('hidden');
             }
         }
 
@@ -599,7 +601,9 @@
         function updateChart() {
             const sensorId = document.getElementById('sensor-select').value;
             const timeRange = document.getElementById('time-range').value;
-            fetchSensorReadings(sensorId, timeRange);
+            if (sensorId) {
+                fetchSensorReadings(sensorId, timeRange);
+            }
         }
 
         // Initialize on page load

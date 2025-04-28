@@ -26,11 +26,11 @@ class DashboardController extends Controller
                 $trend = $this->calculateTrend($readings);
                 
                 return [
-                    'id' => $sensor->sensor_id,
+                    'id' => $sensor->id, // Changed from sensor_id to id
                     'name' => $sensor->name,
                     'location' => $sensor->location,
-                    'lat' => $sensor->latitude, // Use actual latitude from database
-                    'lng' => $sensor->longitude, // Use actual longitude from database
+                    'lat' => $sensor->latitude,
+                    'lng' => $sensor->longitude,
                     'aqi' => $lastReading['value'],
                     'status' => $this->getAqiStatus($lastReading['value']),
                     'trend' => $trend
@@ -42,8 +42,37 @@ class DashboardController extends Controller
 
     public function getSensorReadings(Sensor $sensor)
     {
+        // Get cached readings
         $readings = Cache::get("sensor_{$sensor->id}_readings", []);
+        
+        // If no readings in cache, generate some sample historical data
+        if (empty($readings)) {
+            $readings = $this->generateHistoricalData($sensor);
+            Cache::put("sensor_{$sensor->id}_readings", $readings, now()->addHours(1));
+        }
+        
         return response()->json($readings);
+    }
+
+    private function generateHistoricalData($sensor)
+    {
+        $readings = [];
+        $now = now();
+        $baseValue = $sensor->type === 'co2' ? 400 : ($sensor->type === 'no2' ? 20 : 30);
+        
+        // Generate last 30 days of data
+        for ($i = 30 * 24; $i >= 0; $i--) {
+            // Add some variation to the base value
+            $variation = sin($i / 12) * 10 + (mt_rand(-5, 5));
+            $value = max(0, $baseValue + $variation);
+            
+            $readings[] = [
+                'value' => round($value, 2),
+                'timestamp' => $now->copy()->subHours($i)->format('Y-m-d H:i:s')
+            ];
+        }
+        
+        return $readings;
     }
 
     public function getAlerts()
