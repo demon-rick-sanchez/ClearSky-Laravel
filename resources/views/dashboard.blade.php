@@ -203,6 +203,35 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Simulation History Section -->
+            <div class="mt-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="title">Simulation History</h2>
+                        <select id="simulation-select" class="select-custom">
+                            <option value="">Select Simulation</option>
+                        </select>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Simulation Info -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div id="simulation-info" class="space-y-2">
+                                    <p><span class="font-medium">Sensor:</span> <span id="sim-sensor">-</span></p>
+                                    <p><span class="font-medium">Pattern:</span> <span id="sim-pattern">-</span></p>
+                                    <p><span class="font-medium">Duration:</span> <span id="sim-duration">-</span></p>
+                                    <p><span class="font-medium">Date:</span> <span id="sim-date">-</span></p>
+                                </div>
+                            </div>
+                            <!-- Simulation Chart -->
+                            <div class="bg-white rounded-lg p-4 col-span-1">
+                                <canvas id="simulation-chart" class="w-full h-[300px]"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -210,7 +239,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, trendChart;
+        let map, trendChart, simulationChart;
         let currentSensors = [];
 
         // Initialize map
@@ -435,16 +464,120 @@
             }
         }
 
+        // Initialize simulation chart
+        function initializeSimulationChart() {
+            const ctx = document.getElementById('simulation-chart').getContext('2d');
+            simulationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Simulation Data',
+                        data: [],
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(156, 163, 175, 0.1)',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 12
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Format duration in HH:MM:SS
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // Load simulation history
+        async function loadSimulationHistory() {
+            try {
+                const response = await fetch('/api/simulation-history');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('simulation-select');
+                    select.innerHTML = '<option value="">Select Simulation</option>' + 
+                        data.history.map(record => `
+                            <option value="${record.id}">
+                                ${record.sensor_name} - ${new Date(record.created_at).toLocaleDateString()}
+                            </option>
+                        `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading simulation history:', error);
+            }
+        }
+
+        // Update simulation chart and info
+        function updateSimulationDisplay(record) {
+            // Update info
+            document.getElementById('sim-sensor').textContent = record.sensor_name;
+            document.getElementById('sim-pattern').textContent = record.pattern_type;
+            document.getElementById('sim-duration').textContent = formatDuration(record.duration);
+            document.getElementById('sim-date').textContent = new Date(record.created_at).toLocaleString();
+
+            // Update chart
+            simulationChart.data.labels = record.readings.map((r, i) => 
+                new Date(r.timestamp).toLocaleTimeString()
+            );
+            simulationChart.data.datasets[0].data = record.readings.map(r => r.value);
+            simulationChart.update();
+        }
+
         // Initialize everything
         function initialize() {
             initializeMap();
             initializeTrendChart();
+            initializeSimulationChart();
             fetchSensors();
             fetchAlerts();
+            loadSimulationHistory();
             
             // Set up event listeners
             document.getElementById('sensor-select').addEventListener('change', updateChart);
             document.getElementById('time-range').addEventListener('change', updateChart);
+
+            // Add simulation select event listener
+            document.getElementById('simulation-select').addEventListener('change', async (e) => {
+                if (!e.target.value) return;
+                
+                try {
+                    const response = await fetch(`/api/simulation-history/${e.target.value}`);
+                    const data = await response.json();
+                    if (data.success) {
+                        updateSimulationDisplay(data.record);
+                    }
+                } catch (error) {
+                    console.error('Error loading simulation data:', error);
+                }
+            });
             
             // Set up auto-refresh
             let countdown = 30;

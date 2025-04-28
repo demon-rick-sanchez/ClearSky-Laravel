@@ -13,6 +13,8 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/api/sensors', [DashboardController::class, 'getSensors']);
 Route::get('/api/sensors/{sensor}/readings', [DashboardController::class, 'getSensorReadings']);
 Route::get('/api/alerts', [DashboardController::class, 'getAlerts']);
+Route::get('/api/simulation-history', [DashboardController::class, 'getSimulationHistory']);
+Route::get('/api/simulation-history/{id}', [DashboardController::class, 'getSimulationRecord']);
 
 // User Alert Routes
 Route::middleware(['auth'])->group(function () {

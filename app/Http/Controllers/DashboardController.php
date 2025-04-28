@@ -98,6 +98,55 @@ class DashboardController extends Controller
         return response()->json($allAlerts);
     }
 
+    public function getSimulationHistory()
+    {
+        $history = \App\Models\SimulationData::with('sensor')
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(function ($record) {
+                return [
+                    'id' => $record->id,
+                    'sensor_name' => $record->sensor->name,
+                    'pattern_type' => $record->pattern_type,
+                    'duration' => $record->duration,
+                    'readings' => $record->readings,
+                    'created_at' => $record->created_at
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'history' => $history
+        ]);
+    }
+
+    public function getSimulationRecord($id)
+    {
+        try {
+            $record = \App\Models\SimulationData::with('sensor')
+                ->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'record' => [
+                    'id' => $record->id,
+                    'sensor_name' => $record->sensor->name,
+                    'pattern_type' => $record->pattern_type,
+                    'duration' => $record->duration,
+                    'readings' => $record->readings,
+                    'created_at' => $record->created_at
+                ]
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching simulation record: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch simulation record'
+            ], 500);
+        }
+    }
+
     private function calculateTrend($readings)
     {
         if (count($readings) < 2) return 'stable';
