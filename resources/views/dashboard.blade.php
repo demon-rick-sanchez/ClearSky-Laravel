@@ -187,7 +187,7 @@
                     <div class="p-4">
                         <div class="relative h-[300px]">
                             <canvas id="trends-chart"></canvas>
-                            <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 hidden">
+                            <div id="chart-loading" class="absolute inset-0 items-center justify-center bg-white bg-opacity-80 hidden">
                                 <div class="text-gray-500">Loading data...</div>
                             </div>
                         </div>
@@ -223,8 +223,239 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Additional Quick Access Section -->
+            <div class="mt-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="title">Quick Access</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <a href="{{ route('guidelines') }}" class="group">
+                                <div class="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100">
+                                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-medium text-gray-900">Guidelines</h3>
+                                            <p class="text-sm text-gray-500">Learn about air quality standards</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <a href="{{ route('about') }}" class="group">
+                                <div class="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100">
+                                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-medium text-gray-900">About ClearSky</h3>
+                                            <p class="text-sm text-gray-500">Learn more about our mission</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <a href="#" onclick="event.preventDefault(); showReportsModal()" class="group">
+                                <div class="border border-gray-200 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                                    <div class="flex items-center gap-4">
+                                        <div class="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100">
+                                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-medium text-gray-900">Reports & Data</h3>
+                                            <p class="text-sm text-gray-500">Download air quality reports</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Reports Modal -->
+    <div id="reportsModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-6 w-[600px] shadow-xl rounded-lg bg-white">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-[#212121]">Download Reports</h3>
+                <button onclick="closeReportsModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Quick Reports -->
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-4">Quick Reports</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button onclick="downloadReport('daily')" class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-colors">
+                            <div class="p-2 bg-blue-50 rounded-lg">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3 3m0 0l-3-3m3 3v-7"/>
+                                </svg>
+                            </div>
+                            <div class="text-left">
+                                <div class="font-medium">Daily Report</div>
+                                <div class="text-sm text-gray-500">Last 24 hours data</div>
+                            </div>
+                        </button>
+
+                        <button onclick="downloadReport('weekly')" class="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-500 transition-colors">
+                            <div class="p-2 bg-blue-50 rounded-lg">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </div>
+                            <div class="text-left">
+                                <div class="font-medium">Weekly Report</div>
+                                <div class="text-sm text-gray-500">Last 7 days summary</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Custom Report -->
+                <div class="border-t pt-6">
+                    <h4 class="font-medium text-gray-900 mb-4">Custom Report</h4>
+                    <form id="customReportForm" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-1">Start Date</label>
+                                <input type="date" name="start_date" class="block w-full rounded-lg border border-gray-200 px-4 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-600 mb-1">End Date</label>
+                                <input type="date" name="end_date" class="block w-full rounded-lg border border-gray-200 px-4 py-2">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Select Sensors</label>
+                            <div class="max-h-40 overflow-y-auto p-2 border rounded-lg space-y-2">
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" name="all_sensors" class="rounded border-gray-300" checked>
+                                    <span class="text-sm">All Sensors</span>
+                                </label>
+                                <div class="border-t my-2"></div>
+                                <div id="sensor-checkboxes" class="space-y-2">
+                                    <!-- Will be populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">Report Format</label>
+                            <select name="format" class="block w-full rounded-lg border border-gray-200 px-4 py-2">
+                                <option value="csv">CSV</option>
+                                <option value="excel">Excel</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="flex justify-end pt-6 border-t">
+                    <button type="button" onclick="closeReportsModal()" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="generateCustomReport()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                        Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">ClearSky</h3>
+                    <p class="text-gray-600 text-sm">Your trusted partner in air quality monitoring and environmental awareness.</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="{{ route('about') }}" class="text-gray-600 hover:text-gray-900 text-sm">About Us</a>
+                        </li>
+                        <li>
+                            <a href="{{ route('guidelines') }}" class="text-gray-600 hover:text-gray-900 text-sm">Guidelines</a>
+                        </li>
+                        <li>
+                            <a href="{{ route('alerts') }}" class="text-gray-600 hover:text-gray-900 text-sm">Alert Settings</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-4">Resources</h4>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" class="text-gray-600 hover:text-gray-900 text-sm">API Documentation</a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-gray-600 hover:text-gray-900 text-sm">Mobile App</a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-gray-600 hover:text-gray-900 text-sm">FAQ</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-medium text-gray-900 mb-4">Contact</h4>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            support@clearsky.com
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            +1 (555) 123-4567
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t mt-8 pt-8 flex justify-between items-center">
+                <p class="text-sm text-gray-600">&copy; {{ date('Y') }} ClearSky. All rights reserved.</p>
+                <div class="flex gap-4">
+                    <a href="#" class="text-gray-400 hover:text-gray-600">
+                        <span class="sr-only">Privacy Policy</span>
+                        Privacy Policy
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-gray-600">
+                        <span class="sr-only">Terms of Service</span>
+                        Terms of Service
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -614,5 +845,44 @@
             // You can implement a modal or redirect to a full alerts page
             alert('Viewing all alerts...');
         }
+
+        // Add these functions to your existing script section
+        function showReportsModal() {
+            document.getElementById('reportsModal').classList.remove('hidden');
+            populateSensorCheckboxes();
+        }
+
+        function closeReportsModal() {
+            document.getElementById('reportsModal').classList.add('hidden');
+        }
+
+        function populateSensorCheckboxes() {
+            const container = document.getElementById('sensor-checkboxes');
+            container.innerHTML = currentSensors.map(sensor => `
+                <label class="flex items-center space-x-3">
+                    <input type="checkbox" name="sensors[]" value="${sensor.id}" class="rounded border-gray-300" checked>
+                    <span class="text-sm">${sensor.name} (${sensor.location})</span>
+                </label>
+            `).join('');
+        }
+
+        function downloadReport(type) {
+            // Here you would normally make an API call to download the report
+            alert(`Downloading ${type} report...`);
+            closeReportsModal();
+        }
+
+        function generateCustomReport() {
+            const formData = new FormData(document.getElementById('customReportForm'));
+            // Here you would normally send this data to your backend
+            alert('Generating custom report...');
+            closeReportsModal();
+        }
+
+        // Handle "all sensors" checkbox
+        document.querySelector('input[name="all_sensors"]').addEventListener('change', function(e) {
+            const sensorCheckboxes = document.querySelectorAll('input[name="sensors[]"]');
+            sensorCheckboxes.forEach(checkbox => checkbox.checked = e.target.checked);
+        });
     </script>
 </x-app-layout>
