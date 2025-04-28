@@ -867,16 +867,52 @@
         }
 
         function downloadReport(type) {
-            // Here you would normally make an API call to download the report
-            alert(`Downloading ${type} report...`);
-            closeReportsModal();
+            window.location.href = `/reports/${type}`;
         }
 
         function generateCustomReport() {
             const formData = new FormData(document.getElementById('customReportForm'));
-            // Here you would normally send this data to your backend
-            alert('Generating custom report...');
-            closeReportsModal();
+            
+            // Get selected sensors
+            const selectedSensors = [];
+            document.querySelectorAll('input[name="sensors[]"]:checked').forEach(checkbox => {
+                selectedSensors.push(checkbox.value);
+            });
+
+            // Add to form data
+            if (formData.get('all_sensors')) {
+                formData.delete('sensors[]');
+            } else {
+                formData.delete('all_sensors');
+                selectedSensors.forEach(id => formData.append('sensors[]', id));
+            }
+
+            fetch('/reports/custom', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Report generation failed');
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `air_quality_report_custom_${new Date().toISOString().split('T')[0]}.${formData.get('format')}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+                closeReportsModal();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to generate report. Please try again.');
+            });
         }
 
         // Handle "all sensors" checkbox

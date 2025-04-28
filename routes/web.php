@@ -14,6 +14,13 @@ Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/guidelines', [PageController::class, 'guidelines'])->name('guidelines');
 
+// Report Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reports/daily', [ReportController::class, 'downloadDaily'])->name('reports.daily');
+    Route::get('/reports/weekly', [ReportController::class, 'downloadWeekly'])->name('reports.weekly');
+    Route::post('/reports/custom', [ReportController::class, 'generateCustomReport'])->name('reports.custom');
+});
+
 // Add API routes for sensor data
 Route::get('/api/sensors', [DashboardController::class, 'getSensors']);
 Route::get('/api/sensors/{sensor}/readings', [DashboardController::class, 'getSensorReadings']);
